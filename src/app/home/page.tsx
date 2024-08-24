@@ -1,7 +1,7 @@
 "use client";
 
 import Image from 'next/image';
-import { Card, Col, Row } from 'antd';
+import { Card, Col, Row, Spin, Alert } from 'antd';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import './page.css';
@@ -43,17 +43,42 @@ const truncate = (str: string, n: number) => {
 
 const Home = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMovies = async () => {
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/search/movie?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&query=a`
-      );
-      setMovies(response.data.results);
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/search/movie?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&query=a`
+        );
+        setMovies(response.data.results);
+      } catch (err) {
+        setError('Failed to load movies.');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchMovies();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <Alert message="Error" description={error} type="error" showIcon />
+      </div>
+    );
+  }
 
   return (
     <div className="container">
