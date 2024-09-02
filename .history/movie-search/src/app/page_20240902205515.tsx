@@ -163,7 +163,7 @@ const Home = () => {
   const renderMovies = (movies: Movie[]) => (
     <Row gutter={[16, 16]}>
       {movies.map((movie) => (
-        <Col xs={24} sm={12} md={12} key={movie.id}>
+        <Col xs={24} sm={12} md={8} key={movie.id}>
           <Card hoverable className="movie-card">
             <div className="rating-circle" style={{ backgroundColor: ratingColor(movie.vote_average) }}>
               {movie.vote_average.toFixed(1)}

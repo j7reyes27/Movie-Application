@@ -1,0 +1,138 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.ant-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.ant-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.movie-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-grow: 1;
+  height: 100%;
+  position: relative; /* Needed for positioning the rating circle */
+  overflow: hidden; /* Ensure the image fills the container */
+}
+
+.ant-card-body {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.movie-image {
+  flex-shrink: 0;
+  width: 150px;
+  height: 100%; /* Make the image fill the full height */
+  object-fit: cover; /* Ensure the image covers the container without stretching */
+  margin-left: -16px; /* Align the image to the left edge */
+}
+
+.movie-details {
+  padding-left: 16px;
+  flex-grow: 1;
+}
+
+.movie-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.movie-genres {
+  margin: 8px 0;
+}
+
+.movie-genre {
+  display: inline-block;
+  background-color: #f0f0f0;
+  color: #555;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-right: 8px;
+  font-size: 12px;
+}
+
+.movie-overview {
+  font-size: 14px;
+  color: #555;
+}
+
+.movie-release-date {
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
+}
+
+/* Styling for the hollow rating circle */
+.rating-circle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #fff;
+  border: 2px solid #fff; /* Make the circle hollow */
+  background-color: transparent; /* Hollow circle */
+}
+
+/* Adjust column size to display 2 movies per row */
+@media (min-width: 768px) {
+  .ant-col {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+.ant-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.ant-pagination-item {
+  border: none;
+  font-size: 16px;
+}
+
+.ant-pagination-item-active {
+  background-color: #1890ff;
+  border-radius: 50%;
+  border: none;
+  color: white;
+}
+
+.ant-pagination-item a {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
+}
+
+.ant-pagination-prev, .ant-pagination-next {
+  display: none;
+}
+
+.ant-pagination-item a:hover {
+  color: #1890ff;
+}
+
+.ant-pagination-item-active a {
+  color: white;
+}

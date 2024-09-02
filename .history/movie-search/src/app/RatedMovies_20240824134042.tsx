@@ -32,35 +32,35 @@ const truncate = (str: string, n: number) => {
   return str.length > n ? str.substr(0, n - 1) + '...' : str;
 };
 
-const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, genres: Genre[], onTabSelect: (fn: () => void) => void }) => {
+const RatedMovies = ({ sessionId, genres }: { sessionId: string, genres: Genre[] }) => {
   const [ratedMovies, setRatedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRatedMovies = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/guest_session/${sessionId}/rated/movies?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
-      );
-      setRatedMovies(response.data.results);
-    } catch (err) {
-      if (err.response && err.response.status === 404) {
-        setRatedMovies([]); // Handle no rated movies
-      } else {
-        setError('Failed to load rated movies.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchRatedMovies();  // Directly fetch rated movies on mount
-    onTabSelect(fetchRatedMovies);
+    const fetchRatedMovies = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/guest_session/${sessionId}/rated/movies?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
+        );
+        console.log('Rated Movies:', response.data.results);
+        setRatedMovies(response.data.results);
+      } catch (err) {
+        if (err.response && err.response.status === 404) {
+          console.log('No rated movies found for this session.');
+          setRatedMovies([]); // Handle no rated movies
+        } else {
+          setError('Failed to load rated movies.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRatedMovies();
   }, [sessionId]);
 
-  
   if (loading) {
     return (
       <div className="loading-container">

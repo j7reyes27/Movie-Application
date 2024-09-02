@@ -1,40 +1,3 @@
-"use client";
-
-import { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
-import { debounce } from 'lodash';
-import './page.css';
-import RatedMovies from './RatedMovies';
-import { Card, Col, Row, Spin, Alert, Input, Pagination, Rate, Tabs } from 'antd';
-import Image from 'next/image';
-
-interface Movie {
-  id: number;
-  title: string;
-  release_date: string;
-  overview: string;
-  poster_path: string | null;
-  genre_ids: number[];
-  vote_average: number;
-  userRating?: number;
-}
-
-interface Genre {
-  id: number;
-  name: string;
-}
-
-const ratingColor = (rating: number) => {
-  if (rating <= 3) return "#E90000";
-  if (rating <= 5) return "#E97E00";
-  if (rating <= 7) return "#E9D100";
-  return "#66E900";
-};
-
-const truncate = (str: string, n: number) => {
-  return str.length > n ? str.substr(0, n - 1) + '...' : str;
-};
-
 const Home = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -44,29 +7,25 @@ const Home = () => {
   const [totalResults, setTotalResults] = useState<number>(0);
   const [session_id, setSessionId] = useState<string | null>(null);
   const [genres, setGenres] = useState<Genre[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("1"); // Track the active tab
 
-  // Ref to store the fetch function from RatedMovies
-  const fetchRatedMoviesRef = useRef<() => void>();
-
+  // Initialize the session or get the existing session ID
   const initializeSession = async () => {
     try {
-      let existingSessionId = localStorage.getItem('session_id'); 
+      let existingSessionId = localStorage.getItem('session_id'); // Use consistent key
       
       if (existingSessionId) {
-        console.log('Using existing session ID:', existingSessionId);
         setSessionId(existingSessionId);
         return;
       }
 
-      console.log('No session ID found. Requesting a new one...');
       const response = await axios.get(
         `https://api.themoviedb.org/3/authentication/guest_session/new?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
       );
 
       const newSessionId = response.data.guest_session_id;
       setSessionId(newSessionId);
-      localStorage.setItem('session_id', newSessionId); 
-      console.log('New session ID:', newSessionId);
+      localStorage.setItem('session_id', newSessionId); // Store under the same key
       
     } catch (err) {
       console.error('Failed to initialize session:', err);
@@ -99,44 +58,40 @@ const Home = () => {
     }
   };
 
-  useEffect(() => {
-    const debouncedFetchMovies = debounce((search: string, page: number) => {
-      fetchMovies(search, page);
-    }, 500);
-
-    debouncedFetchMovies(searchTerm, page);
-
-    return () => {
-      debouncedFetchMovies.cancel();
-    };
-  }, [searchTerm, page]);
+  const fetchRatedMovies = async () => {
+    // Fetch rated movies logic here
+  };
 
   useEffect(() => {
     initializeSession(); // Initialize session when component mounts
     fetchGenres();
   }, []);
 
-  const handleTabClick = (key: string) => {
-    if (key === "2" && fetchRatedMoviesRef.current) {
-      fetchRatedMoviesRef.current();
+  useEffect(() => {
+    if (activeTab === "1") {
+      fetchMovies(searchTerm, page);
+    } else if (activeTab === "2") {
+      // Fetch rated movies when the Rated tab is active
+      fetchRatedMovies();
     }
+  }, [activeTab, searchTerm, page]);
+
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
   };
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
-    setPage(1);
+    setPage(1); // Reset to first page when search term changes
   };
 
-  const handlePageChange = (page: number) => {
-    setPage(page);
-  };
-
+  // Define the handleRate function
   const handleRate = async (movieId: number, rating: number) => {
     if (!session_id) return;
     try {
       const response = await axios.post(
         `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&guest_session_id=${session_id}`,
-        { value: rating * 2 }
+        { value: rating * 2 } // TMDB expects rating out of 10
       );
       console.log('Rating response:', response.data);
     } catch (err) {
@@ -144,26 +99,14 @@ const Home = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="error-container">
-        <Alert message="Error" description={error} type="error" showIcon />
-      </div>
-    );
-  }
+  const handlePageChange = (page: number) => {
+    setPage(page);
+  };
 
   const renderMovies = (movies: Movie[]) => (
     <Row gutter={[16, 16]}>
       {movies.map((movie) => (
-        <Col xs={24} sm={12} md={12} key={movie.id}>
+        <Col xs={24} sm={12} md={8} key={movie.id}>
           <Card hoverable className="movie-card">
             <div className="rating-circle" style={{ backgroundColor: ratingColor(movie.vote_average) }}>
               {movie.vote_average.toFixed(1)}
@@ -193,7 +136,7 @@ const Home = () => {
               <Rate
                 allowHalf
                 defaultValue={movie.userRating || 0}
-                onChange={(value) => handleRate(movie.id, value)}
+                onChange={(value) => handleRate(movie.id, value)} // Attach the handleRate function here
               />
             </div>
           </Card>
@@ -236,13 +179,13 @@ const Home = () => {
     {
       key: "2",
       label: "Rated",
-      children: session_id ? <RatedMovies sessionId={session_id} genres={genres} onTabSelect={fn => fetchRatedMoviesRef.current = fn}/> : <Spin size="large" />,
+      children: session_id ? <RatedMovies sessionId={session_id} genres={genres} /> : <Spin size="large" />,
     },
   ];
 
   return (
     <div className="container">
-      <Tabs defaultActiveKey="1" items={tabItems} onChange={handleTabClick} />
+      <Tabs defaultActiveKey="1" activeKey={activeTab} onChange={handleTabChange} items={tabItems} />
     </div>
   );
 };

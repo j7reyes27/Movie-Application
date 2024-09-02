@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { debounce } from 'lodash';
 import './page.css';
@@ -44,13 +44,11 @@ const Home = () => {
   const [totalResults, setTotalResults] = useState<number>(0);
   const [session_id, setSessionId] = useState<string | null>(null);
   const [genres, setGenres] = useState<Genre[]>([]);
-
-  // Ref to store the fetch function from RatedMovies
-  const fetchRatedMoviesRef = useRef<() => void>();
+  const [refreshRatedMovies, setRefreshRatedMovies] = useState<boolean>(false);
 
   const initializeSession = async () => {
     try {
-      let existingSessionId = localStorage.getItem('session_id'); 
+      let existingSessionId = localStorage.getItem('session_id');
       
       if (existingSessionId) {
         console.log('Using existing session ID:', existingSessionId);
@@ -65,7 +63,7 @@ const Home = () => {
 
       const newSessionId = response.data.guest_session_id;
       setSessionId(newSessionId);
-      localStorage.setItem('session_id', newSessionId); 
+      localStorage.setItem('session_id', newSessionId);
       console.log('New session ID:', newSessionId);
       
     } catch (err) {
@@ -112,15 +110,9 @@ const Home = () => {
   }, [searchTerm, page]);
 
   useEffect(() => {
-    initializeSession(); // Initialize session when component mounts
+    initializeSession();
     fetchGenres();
   }, []);
-
-  const handleTabClick = (key: string) => {
-    if (key === "2" && fetchRatedMoviesRef.current) {
-      fetchRatedMoviesRef.current();
-    }
-  };
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -134,15 +126,27 @@ const Home = () => {
   const handleRate = async (movieId: number, rating: number) => {
     if (!session_id) return;
     try {
-      const response = await axios.post(
+      await axios.post(
         `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&guest_session_id=${session_id}`,
-        { value: rating * 2 }
+        { value: rating }
       );
-      console.log('Rating response:', response.data);
+  
+      // Manually update the ratedMovies state directly
+      setRatedMovies((prevMovies) =>
+        prevMovies.map((movie) =>
+          movie.id === movieId ? { ...movie, userRating: rating } : movie
+        )
+      );
     } catch (err) {
       console.error('Failed to rate movie:', err);
     }
   };
+  
+  
+  useEffect(() => {
+    fetchRatedMovies();
+  }, [sessionId, refreshRatedMovies]); // This should ensure that the fetch happens when the relevant states change
+  
 
   if (loading) {
     return (
@@ -163,7 +167,7 @@ const Home = () => {
   const renderMovies = (movies: Movie[]) => (
     <Row gutter={[16, 16]}>
       {movies.map((movie) => (
-        <Col xs={24} sm={12} md={12} key={movie.id}>
+        <Col xs={24} sm={12} md={8} key={movie.id}>
           <Card hoverable className="movie-card">
             <div className="rating-circle" style={{ backgroundColor: ratingColor(movie.vote_average) }}>
               {movie.vote_average.toFixed(1)}
@@ -194,6 +198,7 @@ const Home = () => {
                 allowHalf
                 defaultValue={movie.userRating || 0}
                 onChange={(value) => handleRate(movie.id, value)}
+                count={10}
               />
             </div>
           </Card>
@@ -236,13 +241,13 @@ const Home = () => {
     {
       key: "2",
       label: "Rated",
-      children: session_id ? <RatedMovies sessionId={session_id} genres={genres} onTabSelect={fn => fetchRatedMoviesRef.current = fn}/> : <Spin size="large" />,
+      children: session_id ? <RatedMovies sessionId={session_id} genres={genres} refresh={refreshRatedMovies} /> : <Spin size="large" />,
     },
   ];
 
   return (
     <div className="container">
-      <Tabs defaultActiveKey="1" items={tabItems} onChange={handleTabClick} />
+      <Tabs defaultActiveKey="1" items={tabItems} />
     </div>
   );
 };

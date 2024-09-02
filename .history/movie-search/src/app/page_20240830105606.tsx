@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { debounce } from 'lodash';
 import './page.css';
 import RatedMovies from './RatedMovies';
 import { Card, Col, Row, Spin, Alert, Input, Pagination, Rate, Tabs } from 'antd';
 import Image from 'next/image';
+
 
 interface Movie {
   id: number;
@@ -45,8 +46,26 @@ const Home = () => {
   const [session_id, setSessionId] = useState<string | null>(null);
   const [genres, setGenres] = useState<Genre[]>([]);
 
-  // Ref to store the fetch function from RatedMovies
-  const fetchRatedMoviesRef = useRef<() => void>();
+
+
+  const [refreshRatedMovies, setRefreshRatedMovies] = useState<boolean>(false);
+
+  const handleRate = async (movieId: number, rating: number) => {
+    if (!session_id) return;
+    try {
+      const response = await axios.post(
+        `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&guest_session_id=${session_id}`,
+        { value: rating * 2 } // TMDB expects rating out of 10
+      );
+      console.log('Rating response:', response.data);
+      
+      // Trigger a re-fetch of rated movies after a successful rating
+      setRefreshRatedMovies((prev) => !prev);
+    } catch (err) {
+      console.error('Failed to rate movie:', err);
+    }
+  };
+
 
   const initializeSession = async () => {
     try {
@@ -116,12 +135,6 @@ const Home = () => {
     fetchGenres();
   }, []);
 
-  const handleTabClick = (key: string) => {
-    if (key === "2" && fetchRatedMoviesRef.current) {
-      fetchRatedMoviesRef.current();
-    }
-  };
-
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
     setPage(1);
@@ -163,7 +176,7 @@ const Home = () => {
   const renderMovies = (movies: Movie[]) => (
     <Row gutter={[16, 16]}>
       {movies.map((movie) => (
-        <Col xs={24} sm={12} md={12} key={movie.id}>
+        <Col xs={24} sm={12} md={8} key={movie.id}>
           <Card hoverable className="movie-card">
             <div className="rating-circle" style={{ backgroundColor: ratingColor(movie.vote_average) }}>
               {movie.vote_average.toFixed(1)}
@@ -236,13 +249,13 @@ const Home = () => {
     {
       key: "2",
       label: "Rated",
-      children: session_id ? <RatedMovies sessionId={session_id} genres={genres} onTabSelect={fn => fetchRatedMoviesRef.current = fn}/> : <Spin size="large" />,
+      children: session_id ? <RatedMovies sessionId={session_id} genres={genres} /> : <Spin size="large" />,
     },
   ];
 
   return (
     <div className="container">
-      <Tabs defaultActiveKey="1" items={tabItems} onChange={handleTabClick} />
+      <Tabs defaultActiveKey="1" items={tabItems} />
     </div>
   );
 };

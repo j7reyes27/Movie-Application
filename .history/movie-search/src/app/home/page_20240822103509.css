@@ -1,0 +1,74 @@
+/* page.css */
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .ant-card-body{
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  
+  
+  .movie-card {
+    display: flex;
+    flex-direction: row; /* Side-by-side layout */
+    align-items: flex-start;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+    height: 100%; /* Ensure the card takes full height */
+  }
+  
+  .movie-card:hover {
+    transform: scale(1.05);
+  }
+  
+  .movie-image {
+    flex-shrink: 0;
+    width: 150px; /* Fixed width for the image */
+    height: auto;
+  }
+  
+  .movie-details {
+    max-width: 30%;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-grow: 1;
+  }
+  
+  .movie-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  
+  .movie-genres {
+    margin: 8px 0;
+  }
+  
+  .movie-genre {
+    display: inline-block;
+    background-color: #f0f0f0;
+    color: #555;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-right: 8px;
+    font-size: 12px;
+  }
+  
+  .movie-overview {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .movie-release-date {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+  }
+  

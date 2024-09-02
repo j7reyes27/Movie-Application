@@ -136,7 +136,7 @@ const Home = () => {
     try {
       const response = await axios.post(
         `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&guest_session_id=${session_id}`,
-        { value: rating * 2 }
+        { value: rating}
       );
       console.log('Rating response:', response.data);
     } catch (err) {

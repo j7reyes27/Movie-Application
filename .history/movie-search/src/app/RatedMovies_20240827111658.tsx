@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Spin, Alert } from 'antd';
-import axios from 'axios';
 import Image from 'next/image';
+import { Card, Col, Row, Spin, Alert } from 'antd';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 interface Movie {
   id: number;
@@ -13,12 +13,16 @@ interface Movie {
   poster_path: string | null;
   genre_ids: number[];
   vote_average: number;
-  userRating?: number;
 }
 
 interface Genre {
   id: number;
   name: string;
+}
+
+interface RatedMoviesProps {
+  sessionId: string;
+  genres: Genre[];
 }
 
 const ratingColor = (rating: number) => {
@@ -32,35 +36,32 @@ const truncate = (str: string, n: number) => {
   return str.length > n ? str.substr(0, n - 1) + '...' : str;
 };
 
-const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, genres: Genre[], onTabSelect: (fn: () => void) => void }) => {
+const RatedMovies: React.FC<RatedMoviesProps> = ({ sessionId, genres }) => {
   const [ratedMovies, setRatedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRatedMovies = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/guest_session/${sessionId}/rated/movies?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
-      );
-      setRatedMovies(response.data.results);
-    } catch (err) {
-      if (err.response && err.response.status === 404) {
-        setRatedMovies([]); // Handle no rated movies
-      } else {
-        setError('Failed to load rated movies.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchRatedMovies();  // Directly fetch rated movies on mount
-    onTabSelect(fetchRatedMovies);
+    const fetchRatedMovies = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/guest_session/${sessionId}/rated/movies?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
+        );
+        setRatedMovies(response.data.results);
+      } catch (err) {
+        setError('Failed to load rated movies.');
+        console.error('Error fetching rated movies:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (sessionId) {
+      fetchRatedMovies();
+    }
   }, [sessionId]);
 
-  
   if (loading) {
     return (
       <div className="loading-container">
@@ -77,9 +78,17 @@ const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, ge
     );
   }
 
-  const renderMovies = (movies: Movie[]) => (
+  if (ratedMovies.length === 0) {
+    return (
+      <div className="no-results">
+        <Alert message="No Rated Movies" description="You haven't rated any movies yet." type="info" showIcon />
+      </div>
+    );
+  }
+
+  return (
     <Row gutter={[16, 16]}>
-      {movies.map((movie) => (
+      {ratedMovies.map((movie) => (
         <Col xs={24} sm={12} md={8} key={movie.id}>
           <Card hoverable className="movie-card">
             <div className="rating-circle" style={{ backgroundColor: ratingColor(movie.vote_average) }}>
@@ -112,18 +121,6 @@ const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, ge
         </Col>
       ))}
     </Row>
-  );
-
-  return (
-    <>
-      {ratedMovies.length === 0 ? (
-        <div className="no-results">
-          <Alert message="No Results" description="You haven't rated any movies yet." type="info" showIcon />
-        </div>
-      ) : (
-        renderMovies(ratedMovies)
-      )}
-    </>
   );
 };
 

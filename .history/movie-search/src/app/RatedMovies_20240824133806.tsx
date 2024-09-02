@@ -32,35 +32,82 @@ const truncate = (str: string, n: number) => {
   return str.length > n ? str.substr(0, n - 1) + '...' : str;
 };
 
-const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, genres: Genre[], onTabSelect: (fn: () => void) => void }) => {
+const RatedMovies = ({ sessionId, genres }: { sessionId: string, genres: Genre[] }) => {
   const [ratedMovies, setRatedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRatedMovies = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/guest_session/${sessionId}/rated/movies?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
-      );
-      setRatedMovies(response.data.results);
-    } catch (err) {
-      if (err.response && err.response.status === 404) {
-        setRatedMovies([]); // Handle no rated movies
-      } else {
-        setError('Failed to load rated movies.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const fetchRatedMovies = async () => {
+      try {
+        setLoadingHere's the complete code for the `RatedMovies.tsx` component, which should be used alongside the `Home.tsx` component provided earlier:
+
+### 2. `RatedMovies.tsx`
+
+This component handles fetching and rendering the rated movies separately.
+
+```tsx
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import { Row, Col, Card, Spin, Alert } from 'antd';
+import axios from 'axios';
+import Image from 'next/image';
+
+interface Movie {
+  id: number;
+  title: string;
+  release_date: string;
+  overview: string;
+  poster_path: string | null;
+  genre_ids: number[];
+  vote_average: number;
+  userRating?: number;
+}
+
+interface Genre {
+  id: number;
+  name: string;
+}
+
+const ratingColor = (rating: number) => {
+  if (rating <= 3) return "#E90000";
+  if (rating <= 5) return "#E97E00";
+  if (rating <= 7) return "#E9D100";
+  return "#66E900";
+};
+
+const truncate = (str: string, n: number) => {
+  return str.length > n ? str.substr(0, n - 1) + '...' : str;
+};
+
+const RatedMovies = ({ sessionId, genres }: { sessionId: string, genres: Genre[] }) => {
+  const [ratedMovies, setRatedMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchRatedMovies();  // Directly fetch rated movies on mount
-    onTabSelect(fetchRatedMovies);
+    const fetchRatedMovies = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/guest_session/${sessionId}/rated/movies?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
+        );
+        setRatedMovies(response.data.results);
+      } catch (err) {
+        if (err.response && err.response.status === 404) {
+          setRatedMovies([]);
+        } else {
+          setError('Failed to load rated movies.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRatedMovies();
   }, [sessionId]);
 
-  
   if (loading) {
     return (
       <div className="loading-container">
@@ -115,7 +162,7 @@ const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, ge
   );
 
   return (
-    <>
+    <div className="container">
       {ratedMovies.length === 0 ? (
         <div className="no-results">
           <Alert message="No Results" description="You haven't rated any movies yet." type="info" showIcon />
@@ -123,7 +170,7 @@ const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, ge
       ) : (
         renderMovies(ratedMovies)
       )}
-    </>
+    </div>
   );
 };
 

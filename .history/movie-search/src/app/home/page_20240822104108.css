@@ -1,0 +1,82 @@
+/* page.css */
+
+/* Container styles */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  /* Flexbox for equal height columns */
+  .ant-row {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  /* Ensure each column takes full height */
+  .ant-col {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Ensure each card takes full height */
+  .movie-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-grow: 1; /* Ensures the card stretches to fill the column */
+    height: 100%; /* Make the card take the full height of the column */
+  }
+  
+  /* Override Ant Design's .ant-card-body to use flexbox for side-by-side layout */
+  .ant-card-body {
+    display: flex; /* Ensure it's flexbox */
+    flex-direction: row; /* Horizontal alignment for image and details */
+    align-items: flex-start; /* Align items at the top */
+    padding: 16px; /* Optional: Adjust padding as needed */
+  }
+  
+  /* Styling for the image */
+  .movie-image {
+    flex-shrink: 0; /* Prevent the image from shrinking */
+    width: 150px;
+    height: auto; /* Maintain aspect ratio */
+  }
+  
+  /* Styling for the details section */
+  .movie-details {
+    padding-left: 16px; /* Space between the image and the details */
+    flex-grow: 1; /* Allow the details to take up remaining space */
+  }
+  
+  .movie-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  
+  .movie-genres {
+    margin: 8px 0;
+  }
+  
+  .movie-genre {
+    display: inline-block;
+    background-color: #f0f0f0;
+    color: #555;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-right: 8px;
+    font-size: 12px;
+  }
+  
+  .movie-overview {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .movie-release-date {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+  }
+  

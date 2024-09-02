@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Row, Col, Card, Spin, Alert, Input, Pagination, Rate, Tabs } from 'antd';
 import axios from 'axios';
+import Image from 'next/image';
 import { debounce } from 'lodash';
 import './page.css';
-import RatedMovies from './RatedMovies';
-import { Card, Col, Row, Spin, Alert, Input, Pagination, Rate, Tabs } from 'antd';
-import Image from 'next/image';
+import RatedMovies from './RatedMovies'; // Ensure RatedMovies is imported
 
+// Types and Interfaces
 interface Movie {
   id: number;
   title: string;
@@ -42,36 +43,8 @@ const Home = () => {
   const [searchTerm, setSearchTerm] = useState<string>('a');
   const [page, setPage] = useState<number>(1);
   const [totalResults, setTotalResults] = useState<number>(0);
-  const [session_id, setSessionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [genres, setGenres] = useState<Genre[]>([]);
-
-  // Ref to store the fetch function from RatedMovies
-  const fetchRatedMoviesRef = useRef<() => void>();
-
-  const initializeSession = async () => {
-    try {
-      let existingSessionId = localStorage.getItem('session_id'); 
-      
-      if (existingSessionId) {
-        console.log('Using existing session ID:', existingSessionId);
-        setSessionId(existingSessionId);
-        return;
-      }
-
-      console.log('No session ID found. Requesting a new one...');
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/authentication/guest_session/new?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
-      );
-
-      const newSessionId = response.data.guest_session_id;
-      setSessionId(newSessionId);
-      localStorage.setItem('session_id', newSessionId); 
-      console.log('New session ID:', newSessionId);
-      
-    } catch (err) {
-      console.error('Failed to initialize session:', err);
-    }
-  };
 
   const fetchMovies = async (search: string, page: number) => {
     try {
@@ -99,6 +72,25 @@ const Home = () => {
     }
   };
 
+  const initializeSession = async () => {
+    if (!sessionId) {
+      try {
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/authentication/guest_session/new?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
+        );
+        setSessionId(response.data.guest_session_id);
+        console.log('Session ID:', response.data.guest_session_id);
+      } catch (err) {
+        console.error('Failed to initialize session.', err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    initializeSession();
+    fetchGenres();
+  }, []);
+
   useEffect(() => {
     const debouncedFetchMovies = debounce((search: string, page: number) => {
       fetchMovies(search, page);
@@ -106,21 +98,11 @@ const Home = () => {
 
     debouncedFetchMovies(searchTerm, page);
 
+    // Cleanup function to cancel debounce on unmount
     return () => {
       debouncedFetchMovies.cancel();
     };
   }, [searchTerm, page]);
-
-  useEffect(() => {
-    initializeSession(); // Initialize session when component mounts
-    fetchGenres();
-  }, []);
-
-  const handleTabClick = (key: string) => {
-    if (key === "2" && fetchRatedMoviesRef.current) {
-      fetchRatedMoviesRef.current();
-    }
-  };
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -132,15 +114,15 @@ const Home = () => {
   };
 
   const handleRate = async (movieId: number, rating: number) => {
-    if (!session_id) return;
+    if (!sessionId) return; // Ensure the sessionId exists before proceeding
     try {
       const response = await axios.post(
-        `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&guest_session_id=${session_id}`,
-        { value: rating * 2 }
+        `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&guest_session_id=${sessionId}`,
+        { value: rating * 2 } // TMDB expects rating out of 10
       );
-      console.log('Rating response:', response.data);
+      console.log('Rating response:', response.data); // Log the response for debugging
     } catch (err) {
-      console.error('Failed to rate movie:', err);
+      console.error('Failed to rate movie:', err); // Log any errors that occur
     }
   };
 
@@ -160,10 +142,11 @@ const Home = () => {
     );
   }
 
+  // Function to render the list of movies
   const renderMovies = (movies: Movie[]) => (
     <Row gutter={[16, 16]}>
       {movies.map((movie) => (
-        <Col xs={24} sm={12} md={12} key={movie.id}>
+        <Col xs={24} sm={12} md={8} key={movie.id}>
           <Card hoverable className="movie-card">
             <div className="rating-circle" style={{ backgroundColor: ratingColor(movie.vote_average) }}>
               {movie.vote_average.toFixed(1)}
@@ -236,13 +219,14 @@ const Home = () => {
     {
       key: "2",
       label: "Rated",
-      children: session_id ? <RatedMovies sessionId={session_id} genres={genres} onTabSelect={fn => fetchRatedMoviesRef.current = fn}/> : <Spin size="large" />,
+      children: sessionId ? <RatedMovies sessionId={sessionId} genres={genres} /> : <Spin size="large" />,
     },
   ];
 
+  // Return the main component
   return (
     <div className="container">
-      <Tabs defaultActiveKey="1" items={tabItems} onChange={handleTabClick} />
+      <Tabs defaultActiveKey="1" items={tabItems} />
     </div>
   );
 };

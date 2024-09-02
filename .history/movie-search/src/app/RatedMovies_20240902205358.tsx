@@ -56,11 +56,9 @@ const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, ge
   };
 
   useEffect(() => {
-    fetchRatedMovies();  // Directly fetch rated movies on mount
     onTabSelect(fetchRatedMovies);
-  }, [sessionId]);
+  }, [onTabSelect]);
 
-  
   if (loading) {
     return (
       <div className="loading-container">

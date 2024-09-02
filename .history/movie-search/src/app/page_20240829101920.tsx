@@ -1,6 +1,4 @@
-"use client";
-
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { debounce } from 'lodash';
 import './page.css';
@@ -8,6 +6,7 @@ import RatedMovies from './RatedMovies';
 import { Card, Col, Row, Spin, Alert, Input, Pagination, Rate, Tabs } from 'antd';
 import Image from 'next/image';
 
+// Types and Interfaces
 interface Movie {
   id: number;
   title: string;
@@ -45,12 +44,10 @@ const Home = () => {
   const [session_id, setSessionId] = useState<string | null>(null);
   const [genres, setGenres] = useState<Genre[]>([]);
 
-  // Ref to store the fetch function from RatedMovies
-  const fetchRatedMoviesRef = useRef<() => void>();
-
+  // Initialize the session or get the existing session ID
   const initializeSession = async () => {
     try {
-      let existingSessionId = localStorage.getItem('session_id'); 
+      let existingSessionId = localStorage.getItem('session_id'); // Use consistent key
       
       if (existingSessionId) {
         console.log('Using existing session ID:', existingSessionId);
@@ -65,7 +62,7 @@ const Home = () => {
 
       const newSessionId = response.data.guest_session_id;
       setSessionId(newSessionId);
-      localStorage.setItem('session_id', newSessionId); 
+      localStorage.setItem('session_id', newSessionId); // Store under the same key
       console.log('New session ID:', newSessionId);
       
     } catch (err) {
@@ -116,12 +113,6 @@ const Home = () => {
     fetchGenres();
   }, []);
 
-  const handleTabClick = (key: string) => {
-    if (key === "2" && fetchRatedMoviesRef.current) {
-      fetchRatedMoviesRef.current();
-    }
-  };
-
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
     setPage(1);
@@ -163,7 +154,7 @@ const Home = () => {
   const renderMovies = (movies: Movie[]) => (
     <Row gutter={[16, 16]}>
       {movies.map((movie) => (
-        <Col xs={24} sm={12} md={12} key={movie.id}>
+        <Col xs={24} sm={12} md={8} key={movie.id}>
           <Card hoverable className="movie-card">
             <div className="rating-circle" style={{ backgroundColor: ratingColor(movie.vote_average) }}>
               {movie.vote_average.toFixed(1)}
@@ -236,13 +227,13 @@ const Home = () => {
     {
       key: "2",
       label: "Rated",
-      children: session_id ? <RatedMovies sessionId={session_id} genres={genres} onTabSelect={fn => fetchRatedMoviesRef.current = fn}/> : <Spin size="large" />,
+      children: session_id ? <RatedMovies sessionId={session_id} genres={genres} /> : <Spin size="large" />,
     },
   ];
 
   return (
     <div className="container">
-      <Tabs defaultActiveKey="1" items={tabItems} onChange={handleTabClick} />
+      <Tabs defaultActiveKey="1" items={tabItems} />
     </div>
   );
 };

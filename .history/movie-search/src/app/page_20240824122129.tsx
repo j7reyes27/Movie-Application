@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
+import { Card, Col, Row, Spin, Alert, Input, Pagination, Rate, Tabs } from 'antd'; // Make sure Tabs is imported
+import { useEffect, useState, useCallback, createContext, useContext } from 'react';
 import axios from 'axios';
 import { debounce } from 'lodash';
 import './page.css';
-import RatedMovies from './RatedMovies';
-import { Card, Col, Row, Spin, Alert, Input, Pagination, Rate, Tabs } from 'antd';
-import Image from 'next/image';
 
+// Types and Interfaces
 interface Movie {
   id: number;
   title: string;
@@ -16,13 +16,16 @@ interface Movie {
   poster_path: string | null;
   genre_ids: number[];
   vote_average: number;
-  userRating?: number;
+  userRating?: number; // For storing the user's rating
 }
 
 interface Genre {
   id: number;
   name: string;
 }
+
+// Context for Genres
+const GenreContext = createContext<Genre[]>([]);
 
 const ratingColor = (rating: number) => {
   if (rating <= 3) return "#E90000";
@@ -37,41 +40,14 @@ const truncate = (str: string, n: number) => {
 
 const Home = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [ratedMovies, setRatedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('a');
   const [page, setPage] = useState<number>(1);
   const [totalResults, setTotalResults] = useState<number>(0);
-  const [session_id, setSessionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [genres, setGenres] = useState<Genre[]>([]);
-
-  // Ref to store the fetch function from RatedMovies
-  const fetchRatedMoviesRef = useRef<() => void>();
-
-  const initializeSession = async () => {
-    try {
-      let existingSessionId = localStorage.getItem('session_id'); 
-      
-      if (existingSessionId) {
-        console.log('Using existing session ID:', existingSessionId);
-        setSessionId(existingSessionId);
-        return;
-      }
-
-      console.log('No session ID found. Requesting a new one...');
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/authentication/guest_session/new?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
-      );
-
-      const newSessionId = response.data.guest_session_id;
-      setSessionId(newSessionId);
-      localStorage.setItem('session_id', newSessionId); 
-      console.log('New session ID:', newSessionId);
-      
-    } catch (err) {
-      console.error('Failed to initialize session:', err);
-    }
-  };
 
   const fetchMovies = async (search: string, page: number) => {
     try {
@@ -88,6 +64,27 @@ const Home = () => {
     }
   };
 
+  const fetchRatedMovies = async () => {
+    if (!sessionId) return;
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `https://api.themoviedb.org/3/guest_session/${sessionId}/rated/movies?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
+      );
+      setRatedMovies(response.data.results);
+    } catch (err) {
+      if (err.response && err.response.status === 404) {
+        console.log('No rated movies found for this session.');
+        setRatedMovies([]); // Handle no rated movies
+      } else {
+        setError('Failed to load rated movies.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+
   const fetchGenres = async () => {
     try {
       const response = await axios.get(
@@ -96,31 +93,34 @@ const Home = () => {
       setGenres(response.data.genres);
     } catch (err) {
       console.error('Failed to load genres.');
+      return [];
     }
   };
 
-  useEffect(() => {
-    const debouncedFetchMovies = debounce((search: string, page: number) => {
+  const initializeSession = async () => {
+    try {
+      const response = await axios.get(
+        `https://api.themoviedb.org/3/authentication/guest_session/new?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
+      );
+      setSessionId(response.data.guest_session_id);
+    } catch (err) {
+      console.error('Failed to initialize session.');
+    }
+  };
+
+  const debouncedFetchMovies = useCallback(
+    debounce((search: string, page: number) => {
       fetchMovies(search, page);
-    }, 500);
-
-    debouncedFetchMovies(searchTerm, page);
-
-    return () => {
-      debouncedFetchMovies.cancel();
-    };
-  }, [searchTerm, page]);
+    }, 500),
+    []
+  );
+  
+  
 
   useEffect(() => {
-    initializeSession(); // Initialize session when component mounts
+    initializeSession();
     fetchGenres();
   }, []);
-
-  const handleTabClick = (key: string) => {
-    if (key === "2" && fetchRatedMoviesRef.current) {
-      fetchRatedMoviesRef.current();
-    }
-  };
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -132,15 +132,15 @@ const Home = () => {
   };
 
   const handleRate = async (movieId: number, rating: number) => {
-    if (!session_id) return;
+    if (!sessionId) return;
     try {
-      const response = await axios.post(
-        `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&guest_session_id=${session_id}`,
-        { value: rating * 2 }
+      await axios.post(
+        `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&guest_session_id=${sessionId}`,
+        { value: rating * 2 } // TMDB expects rating out of 10
       );
-      console.log('Rating response:', response.data);
+      setRatedMovies([...ratedMovies, { ...movies.find(m => m.id === movieId)!, userRating: rating }]);
     } catch (err) {
-      console.error('Failed to rate movie:', err);
+      console.error('Failed to rate movie.');
     }
   };
 
@@ -163,7 +163,7 @@ const Home = () => {
   const renderMovies = (movies: Movie[]) => (
     <Row gutter={[16, 16]}>
       {movies.map((movie) => (
-        <Col xs={24} sm={12} md={12} key={movie.id}>
+        <Col xs={24} sm={12} md={8} key={movie.id}>
           <Card hoverable className="movie-card">
             <div className="rating-circle" style={{ backgroundColor: ratingColor(movie.vote_average) }}>
               {movie.vote_average.toFixed(1)}
@@ -175,6 +175,7 @@ const Home = () => {
               height={225}
               className="movie-image"
             />
+
             <div className="movie-details">
               <h3 className="movie-title">{movie.title}</h3>
               <p className="movie-release-date">
@@ -202,6 +203,7 @@ const Home = () => {
     </Row>
   );
 
+  // Define your tab items
   const tabItems = [
     {
       key: "1",
@@ -236,13 +238,29 @@ const Home = () => {
     {
       key: "2",
       label: "Rated",
-      children: session_id ? <RatedMovies sessionId={session_id} genres={genres} onTabSelect={fn => fetchRatedMoviesRef.current = fn}/> : <Spin size="large" />,
+      children: (
+        <>
+          {ratedMovies.length === 0 ? (
+            <div className="no-results">
+              <Alert message="No Results" description="You haven't rated any movies yet." type="info" showIcon />
+            </div>
+          ) : (
+            renderMovies(ratedMovies)
+          )}
+        </>
+      ),
     },
   ];
 
   return (
     <div className="container">
-      <Tabs defaultActiveKey="1" items={tabItems} onChange={handleTabClick} />
+      <Tabs
+        defaultActiveKey="1"
+        onChange={key => {
+          if (key === "2") fetchRatedMovies();
+        }}
+        items={tabItems}
+      />
     </div>
   );
 };

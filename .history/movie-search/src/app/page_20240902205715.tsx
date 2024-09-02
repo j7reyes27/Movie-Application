@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Spin, Alert } from 'antd';
+import { Row, Col, Card, Spin, Alert, Rate } from 'antd';
 import axios from 'axios';
 import Image from 'next/image';
 
@@ -56,11 +56,9 @@ const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, ge
   };
 
   useEffect(() => {
-    fetchRatedMovies();  // Directly fetch rated movies on mount
     onTabSelect(fetchRatedMovies);
-  }, [sessionId]);
+  }, [onTabSelect]);
 
-  
   if (loading) {
     return (
       <div className="loading-container">
@@ -107,6 +105,12 @@ const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, ge
               <p className="movie-overview">
                 {truncate(movie.overview, 120)}
               </p>
+              <Rate
+                count={10}  // Display 10 stars instead of 5
+                allowHalf
+                defaultValue={movie.userRating || 0}
+                onChange={(value) => handleRate(movie.id, value)}
+              />
             </div>
           </Card>
         </Col>
