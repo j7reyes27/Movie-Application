@@ -136,7 +136,7 @@ const Home = () => {
     try {
       const response = await axios.post(
         `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&guest_session_id=${session_id}`,
-        { value: rating * 2 }
+        { value: rating }
       );
       console.log('Rating response:', response.data);
     } catch (err) {
@@ -165,9 +165,13 @@ const Home = () => {
       {movies.map((movie) => (
         <Col xs={24} sm={12} md={12} key={movie.id}>
           <Card hoverable className="movie-card">
-            <div className="rating-circle" style={{ backgroundColor: ratingColor(movie.vote_average) }}>
-              {movie.vote_average.toFixed(1)}
-            </div>
+          <div 
+            className="rating-circle"
+            style={{ borderColor: ratingColor(movie.vote_average), backgroundColor: 'transparent' }}
+          >
+            {movie.vote_average.toFixed(1)}
+          </div>
+
             <Image
               alt={movie.title}
               src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '/path-to-default-image.jpg'}
@@ -191,6 +195,7 @@ const Home = () => {
                 {truncate(movie.overview, 120)}
               </p>
               <Rate
+                count={10}
                 allowHalf
                 defaultValue={movie.userRating || 0}
                 onChange={(value) => handleRate(movie.id, value)}

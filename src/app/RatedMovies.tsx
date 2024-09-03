@@ -82,7 +82,7 @@ const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, ge
       {movies.map((movie) => (
         <Col xs={24} sm={12} md={8} key={movie.id}>
           <Card hoverable className="movie-card">
-            <div className="rating-circle" style={{ backgroundColor: ratingColor(movie.vote_average) }}>
+            <div className="rating-circle" style={{ borderColor: ratingColor(movie.vote_average), backgroundColor: 'transparent' }}>
               {movie.vote_average.toFixed(1)}
             </div>
             <Image
