@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState, useCallback } from 'react';
 import { Row, Col, Card, Spin, Alert } from 'antd';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Image from 'next/image';
 
 interface Movie {
@@ -44,7 +44,8 @@ const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, ge
       );
       setRatedMovies(response.data.results);
     } catch (err) {
-      if (err.response && err.response.status === 404) {
+      const error = err as AxiosError;
+      if (error.response && error.response.status === 404) {
         setRatedMovies([]); 
       } else {
         setError('Failed to load rated movies.');
@@ -52,14 +53,13 @@ const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, ge
     } finally {
       setLoading(false);
     }
-  }, [sessionId]); 
+  }, [sessionId]);
 
   useEffect(() => {
     fetchRatedMovies();  
     onTabSelect(fetchRatedMovies);  
   }, [sessionId, fetchRatedMovies, onTabSelect]);  
 
-  
   if (loading) {
     return (
       <div className="loading-container">
