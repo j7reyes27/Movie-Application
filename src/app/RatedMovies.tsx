@@ -1,6 +1,5 @@
 "use client";
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Row, Col, Card, Spin, Alert } from 'antd';
 import axios from 'axios';
 import Image from 'next/image';
@@ -37,7 +36,7 @@ const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, ge
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRatedMovies = async () => {
+  const fetchRatedMovies = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(
@@ -46,19 +45,19 @@ const RatedMovies = ({ sessionId, genres, onTabSelect }: { sessionId: string, ge
       setRatedMovies(response.data.results);
     } catch (err) {
       if (err.response && err.response.status === 404) {
-        setRatedMovies([]); // Handle no rated movies
+        setRatedMovies([]); 
       } else {
         setError('Failed to load rated movies.');
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [sessionId]); 
 
   useEffect(() => {
-    fetchRatedMovies();  // Directly fetch rated movies on mount
-    onTabSelect(fetchRatedMovies);
-  }, [sessionId]);
+    fetchRatedMovies();  
+    onTabSelect(fetchRatedMovies);  
+  }, [sessionId, fetchRatedMovies, onTabSelect]);  
 
   
   if (loading) {

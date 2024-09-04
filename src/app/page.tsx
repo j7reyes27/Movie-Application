@@ -112,7 +112,7 @@ const Home = () => {
   }, [searchTerm, page]);
 
   useEffect(() => {
-    initializeSession(); // Initialize session when component mounts
+    initializeSession();
     fetchGenres();
   }, []);
 
@@ -163,7 +163,7 @@ const Home = () => {
   const renderMovies = (movies: Movie[]) => (
     <Row gutter={[16, 16]}>
       {movies.map((movie) => (
-        <Col xs={24} sm={12} md={12} key={movie.id}>
+        <Col xs={24} sm={12} md={10} key={movie.id}>
           <Card hoverable className="movie-card">
           <div 
             className="rating-circle"
@@ -192,9 +192,21 @@ const Home = () => {
                 ))}
               </div>
               <p className="movie-overview">
-                {truncate(movie.overview, 120)}
+                
+                {truncate(movie.overview, 120)} 
               </p>
-              <Rate
+              <Rate className='big-stars'
+                count={10}
+                allowHalf
+                defaultValue={movie.userRating || 0}
+                onChange={(value) => handleRate(movie.id, value)}
+              />
+            </div>
+            <div className='mobile'>
+            <p>
+                {truncate(movie.overview, 120)} 
+            </p>
+              <Rate className='mobile-stars'
                 count={10}
                 allowHalf
                 defaultValue={movie.userRating || 0}

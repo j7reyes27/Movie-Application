@@ -1,3 +1,8 @@
+
+.mobile{
+  display: none;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -16,8 +21,8 @@
 
 .movie-card {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  flex-direction: row;
+  justify-content: flex-start;
   flex-grow: 1; 
   height: 100%; 
 }
@@ -25,7 +30,9 @@
 .ant-card-body {
   display: flex;
   flex-direction: row;
+  justify-content: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
   padding: 0 !important;
 }
 
@@ -37,18 +44,23 @@
 
 .movie-details {
   padding-left: 16px; 
-  flex-grow: 1; 
+  max-width: calc(100% - 150px - 16px);
 }
 
 .movie-title {
   font-size: 18px;
   font-weight: bold;
   margin-bottom: 8px;
-  width: 85%;
+  margin-top: 8px;
+  width: 90%;
 }
 
 .movie-genres {
-  margin: 8px 0;
+  margin: 0;
+}
+
+.movie-genre {
+  background-color: ;
 }
 
 .movie-genre {
@@ -64,7 +76,13 @@
 .movie-overview {
   font-size: 14px;
   color: #555;
-  margin-top: 10px; /* Add some margin to separate it from other content */
+  margin-top: 10px;
+  margin-bottom: 8px; 
+  width: 95%;
+}
+
+.big-stars {
+  margin-top: 8px;
 }
 
 .movie-release-date {
@@ -114,8 +132,8 @@
 
 .rating-circle {
   position: absolute;
-  top: 4px; /* Adjust as needed */
-  right: 4px; /* Adjust as needed */
+  top: 4px; 
+  right: 4px; 
   width: 25px;
   height: 25px;
   border-radius: 50%;
@@ -125,9 +143,56 @@
   font-size: 16px;
   font-weight: bold;
   color: #000;
-  border: 3px solid; /* Add border to create the circle */
-  background-color: transparent; /* Make the inside empty */
+  border: 3px solid; 
+  background-color: transparent; 
   z-index: 10;
 }
 
 
+@media (max-width: 768px) {
+  .ant-card-body {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  padding: 0 !important;
+}
+  .movie-image{
+    height: 50%;
+    width: 25%;
+  }
+
+
+
+  .movie-overview{
+    display: none;
+  }
+
+ div .big-stars{
+    display: none;
+  }
+
+  .movie-card{
+    padding-bottom: 8px;
+  }
+
+  .mobile{
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 0;
+  }
+
+  .mobile p{
+    margin-top: 0;
+    margin-left: 8px;
+    margin-right: 8px;
+    margin-bottom: 0;
+  }
+
+  .mobile-stars{
+    align-self: flex-end;
+    margin-right: 16px;
+  }
+}
