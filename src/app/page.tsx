@@ -76,8 +76,9 @@ const Home = () => {
   const fetchMovies = async (search: string, page: number) => {
     try {
       setLoading(true);
+      const query = search ? search : 'A'; // Default to 'A' when search is empty
       const response = await axios.get(
-        `https://api.themoviedb.org/3/search/movie?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&query=${search}&page=${page}`
+        `https://api.themoviedb.org/3/search/movie?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&query=${query}&page=${page}&sort_by=original_title.asc`
       );
       setMovies(response.data.results);
       setTotalResults(response.data.total_results);
@@ -87,6 +88,7 @@ const Home = () => {
       setLoading(false);
     }
   };
+  
 
   const fetchGenres = async () => {
     try {
